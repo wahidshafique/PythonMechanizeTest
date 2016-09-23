@@ -8,7 +8,7 @@ import cookielib
 cj = cookielib.CookieJar()
 br = mechanize.Browser()
 br.set_cookiejar(cj)
-br.open(info.destURL)#URL
+br.open(info.destURL)#the intial url
 
 def writeFile(name, param, data):
     if not (isinstance(data,basestring)):
@@ -27,7 +27,7 @@ def writeCsv(): #just testing
     finally:
         f.close()
 
-class Application(tk.Frame, object):
+class Application(tk.Frame, object):#functions pertinent to scraping live here
     def __init__(self, master=None):
         super(Application, self).__init__(master)
         self.pack()
@@ -43,7 +43,7 @@ class Application(tk.Frame, object):
                               command=root.destroy)
         self.quit.pack(side="bottom")
 
-    def reader(self):#first login
+    def reader(self):#first login sets up the session
         br.select_form(nr=0)#select the first form
         br.form['email'] = info.email
         br.form['password'] = info.password
@@ -51,19 +51,20 @@ class Application(tk.Frame, object):
         control.disabled = False
         control.value = [info.CL]
         br.submit()
+        self.scrape()
 
-        soup = BeautifulSoup(br.response().read(), "lxml")
-        writeFile("websiteData", "wb", soup)
-        writeCsv()
-        #self.scrape(soup)
-
-    def scrape(self, soup):
-        #do stuff
-        br.follow_link('https://georgebrown.mywconline.com/tn_manage3.php?mov=no&sid=sc57be012c4a18b')
-        soup = BeautifulSoup(br.response().read(), "lxml")
-
-        print (soup)
+    def scrape(self):
+        #retaining session id from base login (I think) , go to final url (the master appoint report)
+        br.open(info.finURL)
+        br.select_form(nr=0)
+        form = br.form
+        print(form)
+        form["rid"] = ["sc57be02ac4a7d7"]
+        form.submit()
+        masterSoup = BeautifulSoup(br.response().read(), "lxml")
+        writeFile("websiteData", "wb", masterSoup)
         return
+
 
 root = tk.Tk()
 app = Application(master=root)
