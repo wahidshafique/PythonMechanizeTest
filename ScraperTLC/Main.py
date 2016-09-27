@@ -1,14 +1,16 @@
+import os
 import Info as info
 import csv
 import Tkinter as tk
-import mechanize
 from bs4 import BeautifulSoup
-import cookielib
+from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support.ui import Select
 
-cj = cookielib.CookieJar()
-br = mechanize.Browser()
-br.set_cookiejar(cj)
-br.open(info.destURL)#the intial url
+chromedriver = "chromedriver_win32/chromedriver.exe"
+os.environ["webdriver.chrome.driver"] = chromedriver
+driver = webdriver.Chrome(chromedriver)
+driver.get(info.destURL)#the intial url
 
 def writeFile(name, param, data):
     if not (isinstance(data,basestring)):
@@ -44,27 +46,38 @@ class Application(tk.Frame, object):#functions pertinent to scraping live here
         self.quit.pack(side="bottom")
 
     def reader(self):#first login sets up the session
-        br.select_form(nr=0)#select the first form
-        br.form['email'] = info.email
-        br.form['password'] = info.password
-        control = br.form.find_control("scheduleid")
-        control.disabled = False
-        control.value = [info.CL]
-        br.submit()
+        email = driver.find_element_by_name("email")
+        password = driver.find_element_by_name("password")
+
+        email.send_keys(info.email)
+        password.send_keys(info.password)
+
+        driver.find_element_by_name("login").click()
         self.scrape()
 
     def scrape(self):
+        self.selectName()
         #retaining session id from base login (I think) , go to final url (the master appoint report)
-        br.open(info.finURL)
-        br.select_form(nr=0)
-        form = br.form
-        print(form)
-        form["rid"] = ["sc57be02ac4a7d7"]
-        form.submit()
-        masterSoup = BeautifulSoup(br.response().read(), "lxml")
-        writeFile("websiteData", "wb", masterSoup)
-        return
+        driver.get(info.finURL)
+        select = Select(driver.find_element_by_name('rid'))
+        select.select_by_value("sc57be02ac4a7d7")
+        sendKey("start_date", '09/04/2016')
+        sendKey("end_date", '12/04/2016')
 
+        html = driver.page_source
+        soup = BeautifulSoup(html, "lxml")
+        soup = soup.find("div", {"id": "messagebox2"})
+        writeFile("websiteData", "wb", soup)
+        return
+    def selectName(self):
+         self.enter = tk.Button(self)
+         self.enter["text"] = "Scrape WCONLINE\n(click me)"
+
+def sendKey(id, keys):
+        el = driver.find_element_by_name(id)
+        el.clear()
+        el.send_keys(keys)
+        el.submit()
 
 root = tk.Tk()
 app = Application(master=root)
