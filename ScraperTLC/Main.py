@@ -2,6 +2,8 @@ import os
 import Info as info
 import csv
 import Tkinter as tk
+import time
+import datetime
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
@@ -37,7 +39,7 @@ class Application(tk.Frame, object):#functions pertinent to scraping live here
 
     def create_widgets(self):
         self.enter = tk.Button(self)
-        self.enter["text"] = "Scrape WCONLINE\n(click me)"
+        self.enter["text"] = "Date: " + datetime.date.today().strftime("%B %d, %Y") + " \nScrape WCONLINE\n(click me)"
         self.enter["command"] = self.reader
         self.enter.pack(side="top")
 
